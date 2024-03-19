@@ -4,7 +4,7 @@
 This project use the dataset from: https://population.un.org/wpp/
 This project use Plotly.js and d3.js to show the figure of the world map and the plot.
 The world map data is from opendatasoft.
-- 
+
 This is a course mini project from University of Alberta.
 
 Authors: Movva Sai Sarath, Qiu Haoyu
