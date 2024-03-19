@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html>
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualization Mini Project</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .country {
+            stroke: lightblue;
+            stroke-width: 0.75px;
+        }
+
+        .legend {
+            font-size: 12px;
+        }
+
+        .legend rect {
+            fill: #fff;
+            stroke: #ccc;
+            stroke-width: 1px;
+        }
+
+        .legend text {
+            fill: #000;
+        }
+
+        .country:hover {
+            fill: orange; /* Change color on hover */
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .interface {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 999;
+        }
+
+        .option:hover {
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        #graph-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+</head>
+
+
+<body>
+    <div id="map-container"></div>
+    <div class="tooltip"></div>
+    <div class="interface">
+        <label for="datatype">Type of Data to Show:</label>
+        <select id="datatype" onchange="fetchData()">
+        </select>
+        <label for="chartType">Chart Type:</label>
+        <select id="chartType" onchange="fetchData()">
+            <option value="line">Line</option>
+            <option value="bar">Bar</option>
+        </select>
+        <label for="color">Chart Color:</label>
+        <input type="color" id="color" value="#ff6666">
+    </div>
+    <div id="graph-container"></div>
+    <script>
+        const CountryNameCorrection = {
+            "Sudan": "Sudan",
+            "Sierra Leone": "Sierra Leone",
+            "Zambia": "Zambia",
+            "Madagascar": "Madagascar",
+            "Croatia": "Croatia",
+            "S. Sudan": "South Sudan",
+            "Indonesia": "Indonesia",
+            "South Africa": "South Africa",
+            "Bolivia": "Bolivia",
+            "Cuba": "Cuba",
+            "Guinea": "Guinea",
+            "Liberia": "Liberia",
+            "Burkina Faso": "Burkina Faso",
+            "India": "India",
+            "New Caledonia": "New Caledonia",
+            "Rwanda": "Rwanda",
+            "United Arab Emirates": "United Arab Emirates",
+            "Switzerland": "Switzerland",
+            "Luxembourg": "Luxembourg",
+            "Somaliland": "Somaliland",
+            "W. Sahara": "Western Sahara",
+            "Bahamas": "Bahamas",
+            "Norway": "Norway",
+            "Ecuador": "Ecuador",
+            "Iran": "Iran",
+            "Bulgaria": "Bulgaria",
+            "Kosovo": "Kosovo",
+            "United States of America": "United States",
+            "United Kingdom": "United Kingdom",
+            "Slovakia": "Slovakia",
+            "Czechia": "Czechia",
+            "North Macedonia": "North Macedonia",
+            "Montenegro": "Montenegro",
+            "Uzbekistan": "Uzbekistan",
+            "Belize": "Belize",
+            "Jamaica": "Jamaica",
+            "Afghanistan": "Afghanistan",
+            "Latvia": "Latvia",
+            "Georgia": "Georgia",
+            "Slovenia": "Slovenia",
+            "Djibouti": "Djibouti",
+            "Nicaragua": "Nicaragua",
+            "Benin": "Benin",
+            "Nepal": "Nepal",
+            "Estonia": "Estonia",
+            "Spain": "Spain",
+            "Sweden": "Sweden",
+            "Portugal": "Portugal",
+            "Colombia": "Colombia",
+            "Congo": "Congo",
+            "Jordan": "Jordan",
+            "Germany": "Germany",
+            "Greece": "Greece",
+            "Taiwan": "Taiwan",
+            "Iceland": "Iceland",
+            "Dominican Rep.": "Dominican Republic",
+            "Lesotho": "Lesotho",
+            "Cameroon": "Cameroon",
+            "Kuwait": "Kuwait",
+            "Vanuatu": "Vanuatu",
+            "Denmark": "Denmark",
+            "Somalia": "Somalia",
+            "Fr. S. Antarctic Lands": "French Southern and Antarctic Lands",
+            "Niger": "Niger",
+            "Gabon": "Gabon",
+            "Mozambique": "Mozambique",
+            "Palestine": "Palestine",
+            "Moldova": "Moldova",
+            "Lithuania": "Lithuania",
+            "Serbia": "Serbia",
+            "Kazakhstan": "Kazakhstan",
+            "Falkland Is.": "Falkland Islands",
+            "Uruguay": "Uruguay",
+            "Mali": "Mali",
+            "Oman": "Oman",
+            "Bangladesh": "Bangladesh",
+            "Romania": "Romania",
+            "Greenland": "Greenland",
+            "Brazil": "Brazil",
+            "Puerto Rico": "Puerto Rico",
+            "Namibia": "Namibia",
+            "Lebanon": "Lebanon",
+            "Iraq": "Iraq",
+            "Mongolia": "Mongolia",
+            "Belarus": "Belarus",
+            "Albania": "Albania",
+            "Philippines": "Philippines",
+            "Cyprus": "Cyprus",
+            "Belgium": "Belgium",
+            "N. Cyprus": "Northern Cyprus",
+            "Bosnia and Herz.": "Bosnia and Herzegovina",
+            "Venezuela": "Venezuela",
+            "Poland": "Poland",
+            "Canada": "Canada",
+            "Papua New Guinea": "Papua New Guinea",
+            "Dem. Rep. Congo": "Democratic Republic of the Congo",
+            "Guinea-Bissau": "Guinea-Bissau",
+            "Malawi": "Malawi",
+            "Qatar": "Qatar",
+            "Syria": "Syria",
+            "Austria": "Austria",
+            "Russia": "Russia",
+            "Suriname": "Suriname",
+            "Argentina": "Argentina",
+            "Timor-Leste": "Timor-Leste",
+            "Mauritania": "Mauritania",
+            "Turkmenistan": "Turkmenistan",
+            "Netherlands": "Netherlands",
+            "Uganda": "Uganda",
+            "France": "France",
+            "Côte d'Ivoire": "Cote d'Ivoire",
+            "Central African Rep.": "Central African Republic",
+            "Gambia": "Gambia",
+            "Tunisia": "Tunisia",
+            "Hungary": "Hungary",
+            "Sri Lanka": "Sri Lanka",
+            "Azerbaijan": "Azerbaijan",
+            "Guatemala": "Guatemala",
+            "South Korea": "South Korea",
+            "Ireland": "Ireland",
+            "Finland": "Finland",
+            "Antarctica": "Antarctica",
+            "Burundi": "Burundi",
+            "Pakistan": "Pakistan",
+            "Australia": "Australia",
+            "China": "China",
+            "Malaysia": "Malaysia",
+            "Paraguay": "Paraguay",
+            "Honduras": "Honduras",
+            "Guyana": "Guyana",
+            "Senegal": "Senegal",
+            "Nigeria": "Nigeria",
+            "eSwatini": "Eswatini",
+            "Angola": "Angola",
+            "Algeria": "Algeria",
+            "Laos": "Laos",
+            "Ukraine": "Ukraine",
+            "New Zealand": "New Zealand",
+            "Yemen": "Yemen",
+            "Saudi Arabia": "Saudi Arabia",
+            "Morocco": "Morocco",
+            "Chile": "Chile",
+            "Kenya": "Kenya",
+            "Mexico": "Mexico",
+            "Peru": "Peru",
+            "El Salvador": "El Salvador",
+            "Zimbabwe": "Zimbabwe",
+            "Bhutan": "Bhutan",
+            "Tajikistan": "Tajikistan",
+            "Kyrgyzstan": "Kyrgyzstan",
+            "Egypt": "Egypt",
+            "Libya": "Libya",
+            "Tanzania": "Tanzania",
+            "Chad": "Chad",
+            "Togo": "Togo",
+            "Ghana": "Ghana",
+            "Israel": "Israel",
+            "North Korea": "North Korea",
+            "Brunei": "Brunei",
+            "Fiji": "Fiji",
+            "Panama": "Panama",
+            "Botswana": "Botswana",
+            "Thailand": "Thailand",
+            "Italy": "Italy",
+            "Eritrea": "Eritrea",
+            "Trinidad and Tobago": "Trinidad and Tobago",
+            "Haiti": "Haiti",
+            "Costa Rica": "Costa Rica",
+            "Cambodia": "Cambodia",
+            "Myanmar": "Myanmar",
+            "Armenia": "Armenia",
+            "Solomon Is.": "Solomon Islands",
+            "Japan": "Japan",
+            "Eq. Guinea": "Equatorial Guinea",
+            "Vietnam": "Vietnam",
+            "Turkey": "Turkey",
+            "Ethiopia": "Ethiopia"
+        }
+        const width = 1500;
+        const height = 1200;
+
+        const svg = d3.select("#map-container")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const legendContainer = d3.select("#legend-container");
+        const graphContainer = document.getElementById('graph-container');
+
+        // URL of the GeoJSON file
+        const geojsonUrl = "https://data.opendatasoft.com/api/explore/v2.1/catalog/datasets/natural-earth-countries-1_110m@public/exports/geojson?lang=en&timezone=Europe%2FBerlin";
+
+        const CorrectName = (countryName) => {
+            return CountryNameCorrection[countryName];
+        }
+
+
+        
+
+        // Load the GeoJSON data
+        d3.json(geojsonUrl)
+            .then((geojsonData) => {
+                let projection = d3.geoEquirectangular()
+                    .fitSize([width, height], geojsonData); // Fit map to container size
+                let geoGenerator = d3.geoPath()
+                    .projection(projection); // a function to turn the GeoJSON (long/lat) features property into SVG (X,Y) path definition  
+
+                // Get population data
+                const populationData = geojsonData.features.map(d => d.properties.pop_est);
+
+     
+
+                // Manually set the domain of the color scale
+                const colorScale = d3.scaleSequential(d3.interpolateBlues)
+                    .domain([d3.min(populationData), d3.max(populationData)]);
+
+                
+
+                let currentInfo = "name"; // Default to displaying country name
+
+                let mapNodes = svg
+                    .selectAll('path')
+                    .data(geojsonData.features)
+                    .join('path')
+                    .attr('d', geoGenerator)
+                    .style('fill', (d) => colorScale(d.properties.pop_est))
+                    .attr('class', 'country') // set a CSS class on every country 
+                    .on('mouseover', function (event, d) {
+                        d3.select(this).style('fill', 'orange'); // Change color on hover
+                        // Show tooltip
+                        tooltip.style('opacity', 1)
+                            .html(getInfoText(d))
+                            .style('left', (event.pageX + 10) + 'px')
+                            .style('top', (event.pageY + 10) + 'px');
+                    })
+                    .on('mouseout', function (event, d) {
+                        d3.select(this).style('fill', colorScale(d.properties.pop_est)); // Revert color on mouseout
+                        // Hide tooltip
+                        tooltip.style('opacity', 0);
+                    })
+                    .on('click', function (event, d) {
+                        // Gnerate the graph
+                        const countryName = d.properties.name;
+                        correctednmae = CorrectName(countryName);
+                        
+                    
+                        console.log(correctednmae);
+                        fetchData(correctednmae);
+                    });
+
+                // Add zoom behavior
+                svg.call(d3.zoom()
+                    .scaleExtent([1, 8]) // Define zoom scale limits
+                    .on('zoom', (event) => {
+                        svg.selectAll('.country').attr('transform', event.transform);
+                    }));
+
+                // Add legend and scale index
+                const legendWidth = 200;
+                const legendHeight = 20;
+                const legend = legendContainer.append("svg")
+                    .attr("width", legendWidth)
+                    .attr("height", legendHeight);
+
+                const defs = legend.append("defs");
+
+                const gradient = defs.append("linearGradient")
+                    .attr("id", "gradient")
+                    .attr("x1", "0%")
+                    .attr("x2", "100%")
+                    .attr("y1", "0%")
+                    .attr("y2", "0%");
+
+                gradient.append("stop")
+                    .attr("offset", "0%")
+                    .attr("stop-color", d3.interpolateRdYlBu(0));
+
+                gradient.append("stop")
+                    .attr("offset", "100%")
+                    .attr("stop-color", d3.interpolateRdYlBu(1));
+
+                legend.append("rect")
+                    .attr("x", 0)
+                    .attr("y", 0)
+                    .attr("width", legendWidth)
+                    .attr("height", legendHeight)
+                    .style("fill", "url(#gradient)");
+
+                const legendScale = d3.scaleLinear()
+                    .domain(colorScale.domain())
+                    .range([0, legendWidth]);
+
+                const legendAxis = d3.axisBottom(legendScale)
+                    .ticks(5)
+                    .tickFormat(d3.format(".2s")) // Format ticks in millions
+                    .tickSize(5);
+
+                legend.append("g")
+                    .attr("class", "legend")
+                    .attr("transform", "translate(0," + legendHeight + ")")
+                    .call(legendAxis);
+
+                // Tooltip
+                const tooltip = d3.select('.tooltip');
+
+                // Function to get text based on current info type
+                function getInfoText(d) {
+                    let text = `${d.properties.name}<br>`;
+                    return text;
+                }
+
+                // Select element event listener
+                const infoSelect = document.getElementById('infoSelect');
+
+
+            })
+            .catch((error) => {
+                console.error("Error loading the GeoJSON data: ", error);
+            });
+
+        //The function to fectch data from the server
+        const fetchData = (selectedCountry) => {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    DataTypeSelection(data);
+                    plotChart(data, selectedCountry);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        };
+
+        //The handler function for the data type selection
+        const DataTypeSelection = (data) => {
+            var select = document.getElementById("datatype");
+            for (const _datatype of Object.keys(data['Afghanistan']['2015'])){
+                select.options[select.options.length] = new Option(_datatype);
+            }
+        };
+        // The function to generate the chart
+        const plotChart = (data, selectedCountry) => {
+            const chartType = document.getElementById('chartType').value;
+            const color = document.getElementById('color').value;
+            const country = selectedCountry;
+            const _datatype = document.getElementById("datatype").value;
+            years = [];
+            const selectedCountryData = data[selectedCountry];
+            if (selectedCountryData){
+                //get the years as x axis
+                for (const curryear of Object.keys(selectedCountryData)){
+                    years.push(curryear);
+                } 
+                //get the required data 
+                values = [];
+                for (var i = 0; i < years.length; i++){
+                    values.push(data[country][years[i]][_datatype]);
+                }
+                
+
+                const trace = {
+                    x: years,
+                    y: values,
+                    type: chartType,
+                    marker: { color: color }
+                };
+
+                const layout = {
+                    title: selectedCountry,
+                    xaxis: { title: 'Year' },
+                    yaxis: { title: _datatype },
+                    width: 800, // Set the width of the plot
+                    height: 600, // Set the height of the plot
+                };
+
+                Plotly.newPlot('graph-container', [trace], layout);
+            }
+        };
+        document.getElementById('chartType').addEventListener('change', fetchData);
+        document.getElementById('color').addEventListener('input', fetchData);
+        document.getElementById('datatype').addEventListener('change', fetchData);
+        // Initial plot when page loads
+        fetchData();
+    </script>
+
+</body>
+
+</html>
