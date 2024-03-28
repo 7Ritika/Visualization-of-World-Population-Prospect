@@ -35,14 +35,14 @@
         .tooltip {
             position: absolute;
             background-color: white;
-            border: 1px solid #ccc;
+            border: 10px solid #ccc;
             padding: 10px;
             pointer-events: none;
             opacity: 0;
         }
 
         .interface {
-            position: absolute;
+            position: static;
             top: 10px;
             left: 10px;
             z-index: 999;
@@ -54,30 +54,37 @@
         }
 
         #graph-container {
-            position: absolute;
+            position: center;
             top: 10px;
             right: 10px;
+            
         }
     </style>
 </head>
 
 
 <body>
+    <div id="header" style="text-align: center; padding: 20px; background-color: #ffffff; width: 100%;">
+        <h1>Visualization of World Population Prospects </h1>
+        <div class="tooltip"></div>
+        <div class="interface" style="text-align: center; padding: 20px;">
+            <label for="datatype">Type of Data to Show:</label>
+            <select id="datatype" onchange="fetchData()">
+            </select>
+            <label for="chartType">Chart Type:</label>
+            <select id="chartType" onchange="fetchData()">
+                <option value="line">Line</option>
+                <option value="bar">Bar</option>
+            </select>
+            <label for="color">Chart Color:</label>
+            <input type="color" id="color" value="#ff6666">
+        </div>
+
     <div id="map-container"></div>
-    <div class="tooltip"></div>
-    <div class="interface">
-        <label for="datatype">Type of Data to Show:</label>
-        <select id="datatype" onchange="fetchData()">
-        </select>
-        <label for="chartType">Chart Type:</label>
-        <select id="chartType" onchange="fetchData()">
-            <option value="line">Line</option>
-            <option value="bar">Bar</option>
-        </select>
-        <label for="color">Chart Color:</label>
-        <input type="color" id="color" value="#ff6666">
-    </div>
     <div id="graph-container"></div>
+   
+    
+</div>
     <script>
         const CountryNameCorrection = {
             "Sudan": "Sudan",
@@ -258,8 +265,8 @@
             "Turkey": "Turkey",
             "Ethiopia": "Ethiopia"
         }
-        const width = 1500;
-        const height = 1200;
+        const width = 1920;
+        const height = 700;
 
         const svg = d3.select("#map-container")
             .append("svg")
@@ -449,8 +456,8 @@
                     title: selectedCountry,
                     xaxis: { title: 'Year' },
                     yaxis: { title: _datatype },
-                    width: 800, // Set the width of the plot
-                    height: 600, // Set the height of the plot
+                    width: 1920, // Set the width of the plot
+                    height: 400, // Set the height of the plot
                 };
 
                 Plotly.newPlot('graph-container', [trace], layout);
